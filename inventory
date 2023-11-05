@@ -1,38 +1,23 @@
-[etcd_cluster]  # recommendation: 3, or 5-7 nodes
-10.0.1.29
-10.0.1.97
-10.0.1.52
-
-# if with_haproxy_load_balancing: true
 [balancers]
 10.0.1.238
 10.0.1.233
 
 
-# MySQL nodes
+# mysql nodes
 [master]
-10.0.1.35 hostname=pgnode01 MySQL_exists=false
+10.0.1.35 hostname=mysql-node01 mysql_exists=false
 
 [replica]
-10.0.1.37  hostname=pgnode02 MySQL_exists=false
-10.0.1.129 hostname=pgnode03 MySQL_exists=false
+10.0.1.37  hostname=mysql-node02 mysql_exists=false
+10.0.1.129 hostname=mysql-node03 mysql_exists=false
 
-[postgres_cluster:children]
+[mysql_cluster:children]
 master
 replica
-
-# if pgbackrest_install: true and "repo_host" is set
-[pgbackrest]  # optional (Dedicated Repository Host)
-10.0.1.129
 
 # Connection settings
 [all:vars]
 ansible_connection='ssh'
 ansible_ssh_port='22'
-ansible_user='ec2-user'
-#ansible_ssh_private_key_file=
-#ansible_python_interpreter='/usr/bin/python3'  # is required for use python3
-
-[pgbackrest:vars]
 ansible_user='ec2-user'
 
