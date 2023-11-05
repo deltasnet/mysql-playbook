@@ -1,0 +1,18 @@
+---
+
+- name: Make sure the MySQL schemas are present
+  become: true
+  become_user: postgres
+  community.MySQL.MySQL_schema:
+    name: "{{ item.schema }}"
+    database: "{{ item.db }}"
+    owner: "{{ item.owner }}"
+    login_unix_socket: "{{ MySQL_unix_socket_dir }}"
+    port: "{{ MySQL_port }}"
+    state: present
+  ignore_errors: true
+  loop: "{{ MySQL_schemas | flatten(1) }}"
+  when: MySQL_schemas is defined and MySQL_schemas | length > 0
+  tags: MySQL_schemas
+
+...

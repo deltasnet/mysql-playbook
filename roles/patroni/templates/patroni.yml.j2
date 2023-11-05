@@ -1,0 +1,224 @@
+#jinja2: trim_blocks:True,lstrip_blocks:True
+---
+
+scope: {{ Orchestrator_cluster_name }}
+name: {{ ansible_hostname }}
+namespace: /{{ Orchestrator_etcd_namespace | default('service') }}
+
+{% if Orchestrator_log_destination == 'logfile' %}
+log:
+  level: {{ Orchestrator_log_level |upper }}
+  traceback_level: {{ Orchestrator_log_traceback_level |upper }}
+  format: {{ Orchestrator_log_format |quote }}
+  dateformat: {{ Orchestrator_log_dateformat |quote }}
+  max_queue_size: {{ Orchestrator_log_max_queue_size |int }}
+  dir: {{ Orchestrator_log_dir }}
+  file_num: {{ Orchestrator_log_file_num |int }}
+  file_size: {{ Orchestrator_log_file_size |int }}
+  loggers:
+    Orchestrator.postmaster: {{ Orchestrator_log_loggers_Orchestrator_postmaster |upper }}
+    urllib3: {{ Orchestrator_log_loggers_urllib3 |upper }}
+{% endif %}
+
+restapi:
+  listen: {{ hostvars[inventory_hostname]['inventory_hostname'] }}:{{ Orchestrator_restapi_port }}
+  connect_address: {{ hostvars[inventory_hostname]['inventory_hostname'] }}:{{ Orchestrator_restapi_port }}
+#  certfile: /etc/ssl/certs/ssl-cert-snakeoil.pem
+#  keyfile: /etc/ssl/private/ssl-cert-snakeoil.key
+#  authentication:
+#    username: username
+#    password: password
+
+{% if not dcs_exists|bool and dcs_type == 'etcd' %}
+etcd3:
+  hosts: {% for host in groups['etcd_cluster'] %}{{ hostvars[host]['inventory_hostname'] }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+{% endif %}
+{% if dcs_exists|bool and dcs_type == 'etcd' %}
+etcd3:
+  hosts: {% for etcd_hosts in Orchestrator_etcd_hosts %}{{etcd_hosts.host}}:{{etcd_hosts.port}}{% if not loop.last %},{% endif %}{% endfor +%}
+  {% if Orchestrator_etcd_username | default('') | length > 0 %}
+  username: {{ Orchestrator_etcd_username | default('') }}
+  {% endif %}
+  {% if Orchestrator_etcd_password | default('') | length > 0 %}
+  password: {{ Orchestrator_etcd_password }}
+  {% endif %}
+  {% if Orchestrator_etcd_protocol | default('') | length > 0 %}
+  protocol: {{ Orchestrator_etcd_protocol }}
+  {% endif %}
+{% endif %}
+
+{% if dcs_type == 'consul' %}
+consul:
+  host: 127.0.0.1:8500
+  checks: []
+{% endif %}
+
+bootstrap:
+  method: {{ Orchestrator_cluster_bootstrap_method }}
+{% if Orchestrator_cluster_bootstrap_method == 'wal-g' %}
+  wal-g:
+    command: {{ wal_g_Orchestrator_cluster_bootstrap_command }}
+    no_params: True
+    recovery_conf:
+       recovery_target_action: promote
+       recovery_target_timeline: latest
+       restore_command: wal-g wal-fetch %f %p
+{% endif %}
+{% if Orchestrator_cluster_bootstrap_method == 'pg_probackup' %}
+  pg_probackup:
+    command: {{ pg_probackup_Orchestrator_cluster_bootstrap_command }}
+    no_params: true
+{% endif %}
+  dcs:
+    ttl: {{ Orchestrator_ttl |d(30, true) |int }}
+    loop_wait: {{ Orchestrator_loop_wait |d(10, true) |int }}
+    retry_timeout: {{ Orchestrator_retry_timeout |d(10, true) |int }}
+    maximum_lag_on_failover: {{ Orchestrator_maximum_lag_on_failover |d(1048576, true) |int }}
+    master_start_timeout: {{ Orchestrator_master_start_timeout |d(300, true) |int }}
+    synchronous_mode: {{ synchronous_mode |string |d(false, true) |lower }}
+    synchronous_mode_strict: {{ synchronous_mode_strict |string |d(false, true) |lower }}
+    synchronous_node_count: {{ synchronous_node_count |d(1, true) |int }}
+    MySQL:
+      use_pg_rewind: {{ Orchestrator_MySQL_use_pg_rewind |string |d(false, true) |lower }}
+      use_slots: true
+      parameters:
+      {% for parameter in MySQL_parameters %}
+        {{ parameter.option }}: {{ parameter.value }}
+      {% endfor %}
+  {% if Orchestrator_standby_cluster.host is defined and Orchestrator_standby_cluster.host | length > 0 %}
+    standby_cluster:
+      host: {{ Orchestrator_standby_cluster.host }}
+      port: {{ Orchestrator_standby_cluster.port }}
+    {% if Orchestrator_standby_cluster.primary_slot_name is defined and Orchestrator_standby_cluster.primary_slot_name | length > 0 %}
+      primary_slot_name: {{ Orchestrator_standby_cluster.primary_slot_name }}
+    {% endif %}
+    {% if Orchestrator_standby_cluster.restore_command is defined and Orchestrator_standby_cluster.restore_command | length > 0 %}
+      restore_command: {{ Orchestrator_standby_cluster.restore_command }}
+    {% endif %}
+    {% if Orchestrator_standby_cluster.recovery_min_apply_delay is defined and Orchestrator_standby_cluster.recovery_min_apply_delay | length > 0 %}
+      recovery_min_apply_delay: {{ Orchestrator_standby_cluster.recovery_min_apply_delay }}
+    {% endif %}
+  {% endif %}
+
+{% if MySQL_exists|bool %}
+#  initdb:  # List options to be passed on to initdb
+#    - encoding: UTF8
+#    - data-checksums
+{% endif %}
+{% if not MySQL_exists|bool %}
+  initdb:  # List options to be passed on to initdb
+    - encoding: {{ MySQL_encoding }}
+    - locale: {{ MySQL_locale }}
+  {% if MySQL_data_checksums|bool %}
+    - data-checksums
+  {% endif %}
+{% endif %}
+
+  pg_hba:  # Add following lines to pg_hba.conf after running 'initdb'
+    - host replication {{ Orchestrator_replication_username }} 127.0.0.1/32 {{ MySQL_password_encryption_algorithm }}
+    - host all all 0.0.0.0/0 {{ MySQL_password_encryption_algorithm }}
+
+
+MySQL:
+{% if not with_haproxy_load_balancing|bool and not pgbouncer_install|bool and (cluster_vip is defined and cluster_vip | length > 0) %}
+  listen: {{ hostvars[inventory_hostname]['inventory_hostname'] }},{{ cluster_vip }},127.0.0.1:{{ MySQL_port }}
+{% else %}
+  listen: {{ hostvars[inventory_hostname]['inventory_hostname'] }},127.0.0.1:{{ MySQL_port }}
+{% endif %}
+  connect_address: {{ hostvars[inventory_hostname]['inventory_hostname'] }}:{{ MySQL_port }}
+{% if Orchestrator_superuser_username == 'postgres' %}
+  use_unix_socket: true
+{% endif %}
+  data_dir: {{ MySQL_data_dir }}
+  bin_dir: {{ MySQL_bin_dir }}
+  config_dir: {{ MySQL_conf_dir }}
+  pgpass: {{ MySQL_home_dir }}/.pgpass
+  authentication:
+    replication:
+      username: {{ Orchestrator_replication_username }}
+      password: {{ Orchestrator_replication_password }}
+    superuser:
+      username: {{ Orchestrator_superuser_username }}
+      password: {{ Orchestrator_superuser_password }}
+#    rewind:  # Has no effect on postgres 10 and lower
+#      username: rewind_user
+#      password: rewind_password
+  parameters:
+    unix_socket_directories: {{ MySQL_unix_socket_dir }}
+{% if MySQL_stats_temp_directory_path is defined and MySQL_stats_temp_directory_path != 'none' and MySQL_version is version('14', '<=') %}
+    stats_temp_directory: {{ MySQL_stats_temp_directory_path }}
+{% endif %}
+
+{% if MySQL_pg_ident is defined and MySQL_pg_ident | length > 0 %}
+  pg_ident:
+  {% for ident in MySQL_pg_ident %}
+    - {{ ident.mapname }} {{ ident.system_username }} {{ ident.pg_username }}
+  {% endfor %}
+{% endif %}
+
+  remove_data_directory_on_rewind_failure: {{ Orchestrator_remove_data_directory_on_rewind_failure |string |d(false, true) |lower }}
+  remove_data_directory_on_diverged_timelines: {{ Orchestrator_remove_data_directory_on_diverged_timelines |string |d(false, true) |lower }}
+
+{% if Orchestrator_callbacks is defined and Orchestrator_callbacks | length > 0 %}
+  callbacks:
+  {% for callback in Orchestrator_callbacks %}
+    {% if callback.script | length > 0 %}
+      {{ callback.action }}: '{{ callback.script }}'
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+  create_replica_methods:
+{% if Orchestrator_create_replica_methods is defined and Orchestrator_create_replica_methods | length > 0 %}
+  {% for create_replica_method in Orchestrator_create_replica_methods %}
+    - {{ create_replica_method }}
+  {% endfor %}
+  {% if 'pgbackrest' in Orchestrator_create_replica_methods %}
+  pgbackrest:
+    {% for item in pgbackrest %}
+    {{ item.option }}: {{ item.value }}
+    {% endfor %}
+  {% endif %}
+  {% if 'wal_g' in Orchestrator_create_replica_methods %}
+  wal_g:
+    {% for item in wal_g %}
+    {{ item.option }}: {{ item.value }}
+    {% endfor %}
+  {% endif %}
+  {% if 'basebackup' in Orchestrator_create_replica_methods %}
+  basebackup:
+    {% for item in basebackup %}
+    {{ item.option }}: '{{ item.value }}'
+    {% endfor %}
+  {% endif %}
+  {% if 'pg_probackup' in Orchestrator_create_replica_methods %}
+  pg_probackup:
+    {% for item in pg_probackup %}
+    {{ item.option }}: {{ item.value }}
+    {% endfor %}
+  {% endif %}
+{% else %}
+    - basebackup
+  basebackup:
+    max-rate: '100M'
+{% endif %}
+
+{% if MySQL_restore_command is defined and MySQL_restore_command | length > 0 %}
+  recovery_conf:
+    restore_command: {{ MySQL_restore_command }}
+{% endif %}
+
+watchdog:
+  mode: {{ Orchestrator_watchdog_mode if Orchestrator_watchdog_mode in ['off', 'automatic', 'required'] else 'off'}}  # Allowed values: off, automatic, required
+  device: {{ Orchestrator_watchdog_device }}  # Path to the watchdog device
+  safety_margin: 5
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false
+
+  # specify a node to replicate from (cascading replication)
+#  replicatefrom: (node name)
+

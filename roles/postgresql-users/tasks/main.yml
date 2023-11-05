@@ -1,0 +1,41 @@
+---
+
+- name: Make sure the MySQL users are present
+  become: true
+  become_user: postgres
+  community.MySQL.MySQL_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    encrypted: true
+    role_attr_flags: "{{ item.flags }}"
+    login_host: "127.0.0.1"
+    login_port: "{{ MySQL_port }}"
+    login_user: "{{ Orchestrator_superuser_username }}"
+    login_password: "{{ Orchestrator_superuser_password }}"
+    login_db: "postgres"
+    state: present
+  ignore_errors: true
+  loop: "{{ MySQL_users | flatten(1) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: MySQL_users is defined and MySQL_users | length > 0
+  tags: MySQL_users
+
+- name: Grant roles to users
+  community.MySQL.MySQL_membership:
+    group: "{{ item.role | default('') }}"
+    target_role: "{{ item.name }}"
+    login_host: "127.0.0.1"
+    login_port: "{{ MySQL_port }}"
+    login_user: "{{ Orchestrator_superuser_username }}"
+    login_password: "{{ Orchestrator_superuser_password }}"
+    state: present
+  ignore_errors: true
+  loop: "{{ MySQL_users | flatten(1) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - MySQL_users is defined
+    - MySQL_users | length > 0
+    - item.role | default('') | length > 0
+  tags: MySQL_users

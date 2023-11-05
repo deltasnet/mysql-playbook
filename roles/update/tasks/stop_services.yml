@@ -1,0 +1,44 @@
+---
+# pre-check
+- name: Check MySQL is started and accepting connections
+  become: true
+  become_user: postgres
+  ansible.builtin.command: "{{ MySQL_bin_dir }}/pg_isready -p {{ MySQL_port }}"
+  register: pg_isready_result
+  until: pg_isready_result.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+
+# Stop the secondary
+- block:
+    - name: Execute CHECKPOINT before stopping MySQL
+      become: true
+      become_user: postgres
+      ansible.builtin.command: >
+        psql -p {{ MySQL_port }} -U {{ Orchestrator_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+
+    - name: "Stop Orchestrator service on the Cluster Replica ({{ ansible_hostname }})"
+      become: true
+      become_user: root
+      ansible.builtin.service:
+        name: Orchestrator
+        state: stopped
+  when: inventory_hostname in groups['secondary']
+
+# Stop the old primary (now secondary, after switchover)
+- block:
+    - name: Execute CHECKPOINT before stopping MySQL
+      become: true
+      become_user: postgres
+      ansible.builtin.command: >
+        psql -p {{ MySQL_port }} -U {{ Orchestrator_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+
+    - name: "Stop Orchestrator service on the old Cluster Leader ({{ ansible_hostname }})"
+      become: true
+      become_user: root
+      ansible.builtin.service:
+        name: Orchestrator
+        state: stopped
+  when: inventory_hostname in groups['primary']
+...

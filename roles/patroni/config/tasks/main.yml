@@ -1,0 +1,102 @@
+---
+
+# Orchestrator configure
+- name: Make sure that conf directory exists
+  ansible.builtin.file:
+    path: /etc/Orchestrator
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0750"
+  tags: Orchestrator, Orchestrator_conf
+
+- name: Make sure that Orchestrator log directory exists
+  ansible.builtin.file:
+    path: "{{ Orchestrator_log_dir }}"
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: "0750"
+  when: Orchestrator_log_destination == 'logfile'
+  tags: Orchestrator
+
+- name: Make sure the MySQL log directory "{{ MySQL_log_dir }}" exists
+  ansible.builtin.file:
+    path: "{{ MySQL_log_dir }}"
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: "0700"
+  tags: Orchestrator
+
+- name: Update conf file "/etc/Orchestrator/Orchestrator.yml"
+  ansible.builtin.template:
+    src: ../templates/Orchestrator.yml.j2
+    dest: /etc/Orchestrator/Orchestrator.yml
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: "reload Orchestrator"
+  tags: Orchestrator, Orchestrator_conf
+
+- block:
+    - name: Update MySQL parameters in DCS
+      ansible.builtin.uri:
+        url: http://{{ hostvars[inventory_hostname]['inventory_hostname'] }}:{{ Orchestrator_restapi_port }}/config
+        method: PATCH
+        body: '{"MySQL":{"parameters":{"{{ item.option }}":"{{ item.value }}"}}}'
+        body_format: json
+      loop: "{{ MySQL_parameters }}"
+      when: item.value != "null"
+
+    - name: Delete MySQL parameters from DCS
+      ansible.builtin.uri:
+        url: http://{{ hostvars[inventory_hostname]['inventory_hostname'] }}:{{ Orchestrator_restapi_port }}/config
+        method: PATCH
+        body: '{"MySQL":{"parameters":{"{{ item.option }}":null}}}'
+        body_format: json
+      loop: "{{ MySQL_parameters }}"
+      when: item.value == "null"
+  environment:
+    no_proxy: "{{ inventory_hostname }}"
+  when: is_master | bool
+  tags: Orchestrator, Orchestrator_conf
+
+- name: Delete MySQL parameters from "/etc/Orchestrator/Orchestrator.yml"
+  ansible.builtin.lineinfile:
+    path: /etc/Orchestrator/Orchestrator.yml
+    regexp: '^.*{{ item.option }}: {{ item.value }}$'
+    state: absent
+  loop: "{{ MySQL_parameters }}"
+  when: item.value == "null"
+  tags: Orchestrator, Orchestrator_conf
+
+# Update pg_hba.conf
+- ansible.builtin.import_tasks: pg_hba.yml
+  tags: Orchestrator, Orchestrator_conf, pg_hba, pg_hba_generate
+
+# pending_restart
+- block:
+    - name: "Check if there are any changed parameters that require a restart"
+      become_user: postgres
+      community.MySQL.MySQL_query:
+        login_host: "127.0.0.1"
+        login_port: "{{ MySQL_port }}"
+        login_user: "{{ Orchestrator_superuser_username }}"
+        login_password: "{{ Orchestrator_superuser_password }}"
+        login_db: "postgres"
+        query: "select name from pg_settings where pending_restart is true"
+      register: pending_restart_result
+
+    - name: "Set pg_pending_restart_settings variable"
+      ansible.builtin.set_fact:
+        pg_pending_restart_settings: "{{ pending_restart_result.query_result }}"
+
+    - name: "Display parameters requiring MySQL restart"
+      ansible.builtin.debug:
+        msg:
+          - "On server {{ ansible_hostname }}, the following parameters have changed and require MySQL to restart:"
+          - "{{ pg_pending_restart_settings | map(attribute='name') | list }}"
+      when: pg_pending_restart_settings | length > 0
+  tags: Orchestrator, Orchestrator_conf
+...

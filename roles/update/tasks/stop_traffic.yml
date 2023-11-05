@@ -1,0 +1,45 @@
+---
+- name: "Edit Orchestrator.yml | enable noloadbalance, nosync, nofailover"
+  ansible.builtin.replace:
+    path: /etc/Orchestrator/Orchestrator.yml
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: 'noloadbalance: false', replace: 'noloadbalance: true' }
+    - { regexp: 'nosync: false', replace: 'nosync: true' }
+    - { regexp: 'nofailover: false', replace: 'nofailover: true' }
+  loop_control:
+    label: '{{ item.replace }}'
+
+- name: Reload Orchestrator service
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: Orchestrator
+    enabled: true
+    state: reloaded
+
+- name: Make sure replica endpoint is unavailable
+  ansible.builtin.uri:
+    url: http://{{ inventory_hostname }}:{{ Orchestrator_restapi_port }}/replica
+    status_code: 503
+  register: Orchestrator_replica_result
+  until: Orchestrator_replica_result.status == 503
+  retries: 30
+  delay: 2
+
+- name: Wait for active transactions to complete
+  become: true
+  become_user: postgres
+  ansible.builtin.command: >-
+    psql -p {{ MySQL_port }} -U {{ Orchestrator_superuser_username }} -d postgres -tAXc
+    "select count(*)
+    from pg_stat_activity
+    where pid <> pg_backend_pid()
+    and backend_type = 'client backend'
+    and state = 'active'"
+  register: pg_active_count
+  until: pg_active_count.stdout|int == 0
+  retries: 300
+  delay: 2
+  changed_when: false
+...
