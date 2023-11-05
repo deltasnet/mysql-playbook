@@ -1,0 +1,10 @@
+---
+
+- name: Reload mysql service
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: mysql
+    enabled: true
+    state: reloaded
+  listen: "reload mysql"
+...

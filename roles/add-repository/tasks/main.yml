@@ -44,41 +44,25 @@
       when: install_epel_repo|bool
       tags: install_epel_repo
 
-    # Add repository to install dependencies for mysql
+    # Install MySQL Repository
     - block:
-        - name: Add MySQL 5.7 community repository
-          get_url:
-            url: http://repo.mysql.com/yum/mysql-5.7-community/el/8/x86_64/mysql57-community-release-el8-1.noarch.rpm
-            dest: /tmp/mysql57-community-release-el8-1.noarch.rpm
-          register: mysql_repo
+      - name: Add Galera repository
+        copy:
+          dest: "/etc/yum.repos.d/galera.repo"
+          content: |
+            [galera]
+            name = Galera
+            baseurl = https://releases.galeracluster.com/galera-3/redhat/8/x86_64/
+            gpgkey = https://releases.galeracluster.com/GPG-KEY-galeracluster.com
+            gpgcheck = 1
 
-        - name: Install MySQL 5.7 community repository
-          yum:
-            name: /tmp/mysql57-community-release-el8-1.noarch.rpm
-            state: present
-          when: mysql_repo is changed
-
-        - name: Disable MySQL 8.0 repository
-          ini_file:
-            path: /etc/yum.repos.d/mysql-community.repo
-            section: mysql80-community
-            option: enabled
-            value: '0'
-
-        - name: Enable MySQL 5.7 repository
-          ini_file:
-            path: /etc/yum.repos.d/mysql-community.repo
-            section: mysql57-community
-            option: enabled
-            value: '1'
-
-        - name: Add Galera Cluster repository
-          yum_repository:
-            name: galera
-            description: "Galera Cluster 4 Repository"
-            baseurl: "https://releases.galeracluster.com/galera-4/redhat/8/x86_64/"
-            gpgkey: "https://releases.galeracluster.com/GPG-KEY-galeracluster.com"
-            gpgcheck: yes
-            enabled: yes
-
+            [mysql-wsrep]
+            name = MySQL-wsrep
+            baseurl = https://releases.galeracluster.com/mysql-wsrep-5.7/redhat/8/x86_64/
+            gpgkey = https://releases.galeracluster.com/GPG-KEY-galeracluster.com
+            gpgcheck = 1
+      when: install_mysql_repo|bool and ansible_distribution_major_version == '8'
+  environment: "{{ proxy_env | default({}) }}"
+  when: installation_method == "repo" and ansible_os_family == "RedHat"
+  tags: add_repo
 ...

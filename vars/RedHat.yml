@@ -1,9 +1,14 @@
 ---
-mysql_data_dir: "/software/mysql/data"
-mysql_conf_dir: "/etc/my.cnf"
+mysql_base_dir: "/software/mysql"
+mysql_data_dir: "{{ mysql_base_dir }}/data"
+mysql_log_bin_dir: "{{ mysql_data_dir }}/log_bin"
 mysql_bin_dir: "/usr/bin"
-mysql_unix_socket_dir: "{{ mysql_data_dir }}"
-mysql_home_dir: "/software/mysql"
+mysql_unix_socket_dir: "/var/lib/mysql"
+mysql_log_dir: "/var/log/mysql"
+mysql_pid_dir: "/var/run/mysqld"
+mysql_conf_dir: "/etc/mysql/conf.d"
+mysql_conf: "/etc/my.cnf"
+galera_conf: "{{ mysql_conf_dir }}/galera.cnf"
 
 # Repository
 yum_repository: []
@@ -14,18 +19,12 @@ install_scl_repo: true  # or 'false' (Redhat 7 family only)
 
 # Packages (for yum repo)
 os_specific_packages:
-  RedHat-7:
-    - python
-    - python-devel
-    - python-setuptools
-    - libselinux-python
-    - libsemanage-python
-    - policycoreutils-python
   RedHat-8:
     - python2
     - python3-libselinux
     - python3-libsemanage
     - python3-policycoreutils
+    - policycoreutils-python-utils
   RedHat-9:
     - python3-libselinux
     - python3-libsemanage
@@ -45,6 +44,7 @@ system_packages:
   - iptables
   - acl
   - bind-utils
+  - rsync
 
 # The glibc-langpack package includes the basic information required to support the language in your applications.
 # for RHEL version 8 (only)
@@ -52,9 +52,9 @@ glibc_langpack:
   - "glibc-langpack-en"
 
 mysql_packages:
-  - mysql-community-server
   - galera
   - mysql-wsrep-5.7
+  - rsync
 
 
 # (if with_haproxy_load_balancing: true)
@@ -82,6 +82,7 @@ haproxy_compile_requirements:
   - openssl-devel
   - openssl-libs
   - systemd-devel
+
 
 # You can also use your own repository for extra packages. You need to preload all the packages and change this URLs.
 installation_method: "repo"  # (default)"repo" or "file"

@@ -144,40 +144,12 @@
 
     - name: Make sure the /software directory exists
       ansible.builtin.file:
-        dest: "{{ mysql_home_dir }}"
+        dest: "/software"
         state: directory
-        owner: postgres
-        group: postgres
+        owner: mysql
+        group: mysql
       tags: always
 
   roles:
     - role: cron
-
-    - role: pgbouncer
-      when: pgbouncer_install|bool
-
-    - role: pgpass
-
-    - role: Orchestrator
-
-    - role: pgbackrest/stanza-create
-      when: pgbackrest_install|bool
-
-    # optional
-    - role: mysql-users
-      when: is_master | bool and mysql_users | length > 0
-
-    - role: mysql-databases
-      when: is_master | bool and mysql_databases | length > 0
-
-    - role: mysql-schemas
-      when: is_master | bool and mysql_schemas | length > 0
-
-    - role: mysql-grants
-      when: is_master | bool and mysql_users | length > 0
-
-    - role: mysql-extensions
-      when: is_master | bool and mysql_extensions | length > 0
-
-    # finish (info)
-    - role: deploy-finish      
+    - role: mysql

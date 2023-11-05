@@ -32,7 +32,7 @@
       when: ansible_distribution_major_version is version('8', '>=')
   environment: "{{ proxy_env | default({}) }}"
   when: ansible_os_family == "RedHat" and installation_method == "repo"
-  tags: install_packages, install_postgres
+  tags: install_packages, install_mysql
 
 # Install packages from repository
 # RedHat
@@ -63,7 +63,7 @@
         ansible_os_family == "RedHat" and
         ansible_distribution_major_version >= '8'
   ignore_errors: true
-  tags: install_postgres
+  tags: install_mysql
 
 # Install MySQL from repository
 # RedHat
@@ -78,45 +78,5 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when: ansible_os_family == "RedHat" and installation_method == "repo"
-  tags: install_packages, install_postgres
-
-# Debian
-- name: Install MySQL packages
-  ansible.builtin.apt:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ mysql_packages }}"
-  environment: "{{ proxy_env | default({}) }}"
-  register: apt_status
-  until: apt_status is success
-  delay: 5
-  retries: 3
-  when: ansible_os_family == "Debian" and installation_method == "repo"
-  tags: install_packages, install_postgres
-
-# timescaledb (if enable_timescale is defined)
-- name: Install TimescaleDB package
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ timescaledb_package }}"
-  vars:
-    timescaledb_package:
-      - >
-        {% if mysql_version | int >= 11 %}
-        timescaledb-2-mysql-{{ mysql_version }}
-        {% else %}
-        timescaledb-mysql-{{ mysql_version }}
-        {% endif %}
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "repo"
-    - enable_timescale is defined
-    - enable_timescale | bool
-  tags: install_packages, install_postgres, install_timescaledb
-
+  tags: install_packages, install_mysql
 ...

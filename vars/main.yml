@@ -14,7 +14,7 @@ galera_cluster_name: "galera-cluster"  # the cluster name (must be unique for ea
 galera_install_version: "3.1.2"  # or 'latest'
 
 galera_superuser_username: "mysql"
-galera_superuser_password: "postgres-pass"  # please change password
+galera_superuser_password: "mysql-pass"  # please change password
 galera_replication_username: "replication_user"
 galera_replication_password: "replicator-pass"  # please change password
 
@@ -48,6 +48,10 @@ mysql_locale: "en_US.UTF-8"  # for bootstrap only (initdb)
 mysql_data_checksums: true  # for bootstrap only (initdb)
 mysql_password_encryption_algorithm: "scram-sha-256"  # or "md5" if your clients do not work with passwords encrypted with SCRAM-SHA-256
 
+galera_port: "4567"
+galera_incremental_state_transfer_port: "4568"
+galera_state_transfer_port: "4444"
+
 # (optional) list of users to be created (if not already exists)
 mysql_users:
   - { name: "{{ pgbouncer_auth_username }}", password: "{{ pgbouncer_auth_password }}", flags: "LOGIN", role: "", has_grants: false }
@@ -55,11 +59,13 @@ mysql_users:
 
 
 mysql_databases: []
-# - { db: "app_1", encoding: "UTF8", lc_collate: "en_US.UTF-8", lc_ctype: "en_US.UTF-8", owner: "postgres" }
+# - { db: "app_1", encoding: "UTF8", lc_collate: "en_US.UTF-8", lc_ctype: "en_US.UTF-8", owner: "mysql" }
 #  - { db: "mydatabase2", encoding: "UTF8", lc_collate: "ru_RU.UTF-8", lc_ctype: "ru_RU.UTF-8", owner: "mydb-user", conn_limit: "50" }
 
 mysql_schemas: []
 #  - { schema: "myschema", db: "mydatabase", owner: "mydb-user" }
 
 
-
+galera_repo_url: https://releases.galeracluster.com/galera-3/redhat/8/x86_64/
+mysql_wsrep_repo_url: https://releases.galeracluster.com/mysql-wsrep-5.7/redhat/8/x86_64/
+mysql_root_password: "root_password"
