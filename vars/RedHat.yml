@@ -3,7 +3,7 @@ mysql_data_dir: "/software/mysql/data"
 mysql_conf_dir: "/etc/my.cnf"
 mysql_bin_dir: "/usr/bin"
 mysql_unix_socket_dir: "{{ mysql_data_dir }}"
-mysql_home_dir: "/pgsql"
+mysql_home_dir: "/software/mysql"
 
 # Repository
 yum_repository: []
@@ -52,9 +52,9 @@ glibc_langpack:
   - "glibc-langpack-en"
 
 mysql_packages:
-  - mysql{{ mysql_version }}
-  - mysql{{ mysql_version }}-server
-  - mysql{{ mysql_version }}-contrib
+  - mysql-community-server
+  - galera
+  - mysql-wsrep-5.7
 
 
 # (if with_haproxy_load_balancing: true)

@@ -40,7 +40,7 @@ haproxy_timeout:
 
 
 # mysql variables
-mysql_version: "5.7"
+mysql_version: "57"
 # mysql_data_dir: see vars/Debian.yml or vars/RedHat.yml
 mysql_port: "3306"
 mysql_encoding: "UTF8"  # for bootstrap only (initdb)
