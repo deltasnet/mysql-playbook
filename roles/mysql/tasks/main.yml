@@ -168,7 +168,7 @@
 
 
 - name: Find temporary password
-  shell: "echo `grep 'temporary.*root@localhost' /var/log/mysqld.log | sed 's/.*root@localhost: //'`"
+  shell: "echo `grep 'temporary.*root@localhost' /var/log/mysql/mysql-error.log | sed 's/.*root@localhost: //'`"
   register: mysql_root_password_temp
   when: inventory_hostname in groups['master']
   tags: mysql, mysql_conf
