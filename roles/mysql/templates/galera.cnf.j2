@@ -6,7 +6,8 @@ wsrep_provider=/usr/lib64/galera/libgalera_smm.so
 # Galera Cluster Configuration
 wsrep_cluster_name="cluster_01"
 wsrep_cluster_address="gcomm://{% for host in groups['mysql_cluster'] %}{{ hostvars[host]['inventory_hostname'] }}{% if not loop.last %},{% endif %}{% endfor %}"
-wsrep_node_address="{{ ansible_hostname }}"
+# Ip address of ansible host
+wsrep_node_address="{{ ansible_default_ipv4.address }}"
 wsrep_node_name="{{ ansible_hostname }}"
 
 # Galera Synchronization Configuration

@@ -1,13 +1,16 @@
+[client]
+port = {{ mysql_port }}
+socket = {{ mysql_socket }}
+
 [mysql]
-port		  = 3306
-socket		= {{ mysql_unix_socket_dir }}/mysqld.sock
+port		  = {{ mysql_port }}
+socket          = {{ mysql_socket }}
 
 [mysqld]
-# General MySQL Server Options
-user            = mysql
-pid-file        = {{ mysql_pid_dir }}/mysqld.pid
-socket          = {{ mysql_unix_socket_dir }}/mysqld.sock
 port            = {{ mysql_port }}
+socket          = {{ mysql_socket }}
+user            = {{ mysql_os_user }}
+pid-file        = {{ mysql_pid_dir }}/mysqld.pid
 basedir         = {{ mysql_base_dir }}
 datadir         = {{ mysql_data_dir }}
 tmpdir          = /tmp
@@ -38,9 +41,10 @@ general_log_file                = {{ mysql_log_dir }}/mysql.log
 log_error                       = {{ mysql_log_dir }}/mysql-error.log
 slow_query_log                  = 1
 slow_query_log_file             = {{ mysql_log_dir }}/mysql-slow.log
-log_bin                         = {{ mysql_log_bin_dir }}/mysql-bin.log
-expire_logs_days                = 7
-max_binlog_size                 = 100M
+log_bin                         = mysql-bin.log
+log-bin-index                   = mysql-bin.index
+expire_logs_days                = {{ mysql_expire_logs_days }}
+max_binlog_size                 = {{ mysql_max_binlog_size }}
 
 # Binary Logging Format for Galera
 binlog_format                   = ROW

@@ -4,62 +4,87 @@
   ansible.builtin.file:
     path: "{{ mysql_conf_dir }}"
     state: directory
-    owner: mysql
-    group: mysql
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
     mode: "0750"
   tags: mysql, mysql_conf
 
 - name: Make sure that mysql log directory exists
   ansible.builtin.file:
     path: "{{ mysql_log_dir }}"
-    owner: mysql
-    group: mysql
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
     state: directory
     mode: "0750"
+    setype: mysqld_log_t
+  tags: mysql, mysql_conf
+
+- name: Create slow query log file.
+  ansible.builtin.command: "touch {{ mysql_slow_query_log_file }}"
+  args:
+    creates: "{{ mysql_slow_query_log_file }}"
+  tags: mysql, mysql_conf
+
+- name: Set ownership on slow query log file.
+  ansible.builtin.file:
+    path: "{{ mysql_slow_query_log_file }}"
+    state: file
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
+    mode: 0640
+  tags: mysql, mysql_conf
+
+- name: Create error log file.
+  ansible.builtin.command: "touch {{ mysql_error_log_file }}"
+  args:
+    creates: "{{ mysql_error_log_file }}"
+  tags: mysql, mysql_conf
+
+- name: Set ownership on error log file.
+  ansible.builtin.file:
+    path: "{{ mysql_error_log_file }}"
+    state: file
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
+    mode: 0640
   tags: mysql, mysql_conf
 
 - name: Make sure mysql unix socket directory exists.
   ansible.builtin.file:
     path: "{{ mysql_unix_socket_dir }}"
-    owner: mysql
-    group: mysql
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
     state: directory
     mode: "0750"
+    setype: mysqld_var_run_t
   tags: mysql, mysql_conf
 
 - name: Make sure mysql pid directory exists
   ansible.builtin.file:
     path: "{{ mysql_pid_dir }}"
-    owner: mysql
-    group: mysql
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
     state: directory
-    mode: "0750"
-  tags: mysql, mysql_conf
-
-- name: Make sure mysql log_bin directory exists
-  ansible.builtin.file:
-    path: "{{ mysql_log_bin_dir }}"
-    owner: mysql
-    group: mysql
-    state: directory
-    mode: "0750"
+    mode: "0755"
+    setype: mysqld_var_run_t
   tags: mysql, mysql_conf
 
 - name: Make sure mysql data directory exists
   ansible.builtin.file:
     path: "{{ mysql_data_dir }}"
-    owner: mysql
-    group: mysql
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
     state: directory
-    mode: "0750"
+    mode: "0755"
+    setype: mysqld_db_t
   tags: mysql, mysql_conf
 
 - name: Update conf file "/etc/my.cnf"
   ansible.builtin.template:
     src: templates/my.cnf.j2
     dest: "{{ mysql_conf }}"
-    owner: mysql
-    group: mysql
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
     mode: "0640"
   tags: mysql, mysql_conf
 
@@ -67,20 +92,18 @@
   ansible.builtin.template:
     src: templates/galera.cnf.j2
     dest: "{{ galera_conf }}"
-    owner: mysql
-    group: mysql
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
     mode: "0640"
   tags: mysql, mysql_conf
 
 - name: selinux | set mysql_connect_any  flag to enable tcp connections
   ansible.posix.seboolean:
-    name: mysql_connect_any
+    name: "{{ item }}"
     state: true
     persistent: true
   loop:
-    - mysqld_enable_homedirs
     - mysql_connect_any
-    - mysqld_run_mysql_upgrade
   tags: mysql, mysql_conf
 
 - name: Allow MySQL and Galera ports on SELinux 
@@ -102,6 +125,11 @@
     target: "{{ mysql_data_dir }}(/.*)?"
     setype: mysqld_db_t
     state: present
+  loop:
+    - "{{ mysql_data_dir }}(/.*)?"
+    - "/var/lib/mysql-files/(/.*)?"
+    - "/var/lib/mysql-keyring/(/.*)?"
+
   tags: mysql, mysql_conf
 
 - name: Allow MySQL to modify /var/log/mysql
@@ -118,32 +146,34 @@
     state: present
   tags: mysql, mysql_conf
 
+- name: Allow MySQL to modify /var/run/mysqld
+  community.general.sefcontext:
+    target: "{{ mysql_pid_dir }}/mysql.sock"
+    setype: mysqld_var_run_t
+    state: present
+  tags: mysql, mysql_conf
+
 # Apply the SELinux file context changes
 - name: Apply SELinux file context changes
-  command: restorecon -Rv {{ mysql_data_dir }} /var/lib/mysql {{ mysql_log_dir }} {{ mysql_pid_dir }}
+  command: restorecon -Rv {{ item }}
+  loop:
+    - "{{ mysql_data_dir }}"
+    - "/var/lib/mysql"
+    - "{{ mysql_log_dir }}"
+    - "{{ mysql_pid_dir }}"
+    - "{{ mysql_unix_socket_dir }}"
+    - "/var/lib/mysql-files"
   tags: mysql, mysql_conf
+
+- name: Put SELinux in permissive mode, logging actions that would be blocked.
+  ansible.posix.selinux:
+    policy: targeted
+    state: permissive
 
 - name: Stop mysql nodes
   ansible.builtin.service:
     state: stopped
     name: mysqld
-  tags: mysql, mysql_conf
-
-- name: Find all files in a specified directory
-  ansible.builtin.find:
-    paths: "{{ mysql_log_dir }}"
-    recurse: yes
-    file_type: file
-  register: files_to_change
-  tags: mysql, mysql_conf
-
-- name: Change owner of files
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    owner: mysql
-    group: mysql
-  loop: "{{ files_to_change.files }}"
-  when: files_to_change.matched > 0
   tags: mysql, mysql_conf
 
 - name: Bootstarping Primary Mysql Node
@@ -153,11 +183,6 @@
   become: true
   tags: mysql, mysql_conf
 
-- name: Wait 10 seconds after bootstarping Primary Mysql Node
-  pause:
-    seconds: 10
-  tags: mysql, mysql_conf
-
 - name: Start all Mysql nodes
   ansible.builtin.service:
     state: started
@@ -165,7 +190,6 @@
   when: inventory_hostname in groups['replica']
   any_errors_fatal: true
   tags: mysql, mysql_conf
-
 
 - name: Find temporary password
   shell: "echo `grep 'temporary.*root@localhost' /var/log/mysql/mysql-error.log | sed 's/.*root@localhost: //'`"
@@ -183,7 +207,7 @@
     name: mysqld
     state: restarted
     enabled: true
-  tags: mysql, mysql_conf
+  tags: mysql, mysql_conf, post-install
 
 - name: Set mysql root user password and only allow access to root user from HAProxy and localhost
   community.mysql.mysql_user:
@@ -201,7 +225,7 @@
     - "{{ groups['balancers'] }}"
     - 127.0.0.1
     - "localhost"
-  tags: mysql, mysql_conf
+  tags: mysql, mysql_conf, post-install
 
 - name: Create haproxy mysql user to perform basic health checks 
   community.mysql.mysql_user:
@@ -213,6 +237,9 @@
     check_implicit_admin: yes
   loop:
     - "{{ groups['balancers'] }}"
-  tags: mysql, mysql_conf
+  tags: mysql, mysql_conf, post-install
 
+- name: Include users tasks.
+  include_tasks: users.yml
+  tags: mysql, mysql_conf, post-install
 ...
