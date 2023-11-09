@@ -99,7 +99,7 @@
 
 - name: Allow MySQL to modify /software/mysql/data
   community.general.sefcontext:
-    target: "{{ mysql_base_dir }}(/.*)?"
+    target: "{{ mysql_data_dir }}(/.*)?"
     setype: mysqld_db_t
     state: present
   tags: mysql, mysql_conf
