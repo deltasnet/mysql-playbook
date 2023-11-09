@@ -142,7 +142,7 @@
     path: "{{ item.path }}"
     owner: mysql
     group: mysql
-  with_items: "{{ files_to_change.files }}"
+  loop: "{{ files_to_change.files }}"
   when: files_to_change.matched > 0
   tags: mysql, mysql_conf
 
