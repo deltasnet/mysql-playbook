@@ -202,13 +202,6 @@
   when: inventory_hostname in groups['master']
   tags: mysql, mysql_conf
 
-- name: Start mysql service 
-  ansible.builtin.service:
-    name: mysqld
-    state: restarted
-    enabled: true
-  tags: mysql, mysql_conf, post-install
-
 - name: Set mysql root user password and only allow access to root user from HAProxy and localhost
   community.mysql.mysql_user:
     login_user: root
