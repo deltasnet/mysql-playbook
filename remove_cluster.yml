@@ -7,27 +7,27 @@
     - vars/{{ ansible_os_family }}.yml
   tasks:
     - block:
-        - name: Stop MySQL service
-          ansible.builtin.service:
-            name: mysqld
-            state: stopped
-            enabled: false
+      - name: Stop MySQL service
+        ansible.builtin.service:
+          name: mysqld
+          state: stopped
+          enabled: false
 
-        - name: Remove the MySQL and Galera packages
-          ansible.builtin.yum:
-            name: httpd
-            state: absent
-          loop: "{{ mysql_packages }}"
+      - name: Remove the MySQL and Galera packages
+        ansible.builtin.yum:
+          name: httpd
+          state: absent
+        loop: "{{ mysql_packages }}"
 
-        - name: Delete MySQL database content
-          ansible.builtin.file:
-            path: "{{ item }}"
-            state: absent
-          loop:
-            - {{ mysql_data_dir }}
-            - {{ mysql_unix_socket_dir }}
-            - {{ mysql_log_dir }}
-            - {{ mysql_conf_dir }}
+      - name: Delete MySQL database content
+        ansible.builtin.file:
+          path: "{{ item }}"
+          state: absent
+        loop:
+          - "{{ mysql_data_dir }}"
+          - "{{ mysql_unix_socket_dir }}"
+          - "{{ mysql_log_dir }}"
+          - "{{ mysql_conf_dir }}"
       when: remove_mysql | default(false) | bool
       ignore_errors: true
 
@@ -38,15 +38,15 @@
     - vars/main.yml
   tasks:
     - block:
-        - name: Stop HAProxy service
-          ansible.builtin.service:
-            name: haproxy
-            state: stopped
-            enabled: false
+      - name: Stop HAProxy service
+        ansible.builtin.service:
+          name: haproxy
+          state: stopped
+          enabled: false
 
-        - name: Delete HAProxy content
-          ansible.builtin.file:
-            path: "/etc/haproxy/haproxy.cfg"
-            state: absent
+      - name: Delete HAProxy content
+        ansible.builtin.file:
+          path: "/etc/haproxy/haproxy.cfg"
+          state: absent
       when: remove_haproxy | default(false) | bool
       ignore_errors: true
