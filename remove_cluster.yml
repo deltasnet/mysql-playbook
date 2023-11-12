@@ -28,7 +28,7 @@
           - "{{ mysql_unix_socket_dir }}"
           - "{{ mysql_log_dir }}"
           - "{{ mysql_conf_dir }}"
-      when: remove_mysql | default(false) | bool
+      when: remove_mysql
       ignore_errors: true
 
 - name: remove_cluster.yml | Load Balancer Play

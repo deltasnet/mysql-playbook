@@ -1,13 +1,13 @@
 [balancers]
-10.0.1.24 
-10.0.1.182
+10.0.1.123 
+10.0.1.157
 
 [master]
-10.0.1.119 hostname=mysql-node01 mysql_exists=false server_id=1
+10.0.1.73 hostname=mysql-node01 mysql_exists=false server_id=1
 
 [replica]
-10.0.1.180 hostname=mysql-node02 mysql_exists=false server_id=2
-10.0.1.140 hostname=mysql-node03 mysql_exists=false server_id=3
+10.0.1.88 hostname=mysql-node02 mysql_exists=false server_id=2
+10.0.1.90 hostname=mysql-node03 mysql_exists=false server_id=3
 
 [mysql_cluster:children]
 master
@@ -18,5 +18,3 @@ replica
 ansible_connection='ssh'
 ansible_ssh_port='22'
 ansible_user='ec2-user'
-
-
