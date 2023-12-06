@@ -1,0 +1,10 @@
+---
+- name: Update galera.cnf
+  ansible.builtin.template:
+    src: ../templates/galera.cnf.j2
+    dest: "{{ galera_conf }}"
+    owner: "{{ mysql_os_user }}"
+    group: "{{ mysql_os_group }}"
+    mode: "0640"
+  tags: mysql, mysql_conf
+  notify: "reload mysql"

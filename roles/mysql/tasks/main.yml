@@ -129,7 +129,6 @@
     - "{{ mysql_data_dir }}(/.*)?"
     - "/var/lib/mysql-files/(/.*)?"
     - "/var/lib/mysql-keyring/(/.*)?"
-
   tags: mysql, mysql_conf
 
 - name: Allow MySQL to modify /var/log/mysql
@@ -153,7 +152,6 @@
     state: present
   tags: mysql, mysql_conf
 
-# Apply the SELinux file context changes
 - name: Apply SELinux file context changes
   command: restorecon -Rv {{ item }}
   loop:
@@ -164,6 +162,12 @@
     - "{{ mysql_unix_socket_dir }}"
     - "/var/lib/mysql-files"
   tags: mysql, mysql_conf
+
+- name: Set SELinux to permissive mode for mysqld
+  seboolean:
+    name: mysqld_disable_trans
+    state: yes
+    persistent: yes
 
 - name: Put SELinux in permissive mode, logging actions that would be blocked.
   ansible.posix.selinux:

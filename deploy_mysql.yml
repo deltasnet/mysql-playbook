@@ -1,7 +1,7 @@
 ---
 
-- name: Deploy mysql HA Cluster
-  hosts: all
+- name: Deploy MySQL Galera Cluster
+  hosts: mysql_cluster
   become: true
   become_method: sudo
   gather_facts: true
@@ -151,5 +151,4 @@
       tags: always
 
   roles:
-    - role: cron
     - role: mysql

@@ -26,3 +26,9 @@ wsrep_max_ws_size=1073741824
 
 # SST/IST Settings - these should be secure
 wsrep_sst_auth=sstuser:sstpassword
+
+{% if ansible_host in groups['dr_datacenter'] %}
+# DR datacenter nodes are read-only and have lower weight
+wsrep_provider_options="pc.weight=0;pc.ignore_sb=true"
+read_only=ON
+{% endif %}
