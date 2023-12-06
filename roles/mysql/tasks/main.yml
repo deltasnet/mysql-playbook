@@ -163,16 +163,14 @@
     - "/var/lib/mysql-files"
   tags: mysql, mysql_conf
 
-- name: Set SELinux to permissive mode for mysqld
-  seboolean:
-    name: mysqld_disable_trans
-    state: yes
-    persistent: yes
-
 - name: Put SELinux in permissive mode, logging actions that would be blocked.
   ansible.posix.selinux:
     policy: targeted
     state: permissive
+
+- name: Disable SELinux
+  ansible.posix.selinux:
+    state: disabled
 
 - name: Stop mysql nodes
   ansible.builtin.service:
