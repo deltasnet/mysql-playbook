@@ -1,0 +1,51 @@
+---
+- name: Configure MySQL Server for Backups
+  hosts: mysql_cluster
+  become: yes
+  vars:
+    mysql_root_password: "{{ mysql_root_password }}"
+    backup_user_password: "{{ mysql_root_password }}"
+
+  tasks:
+    - name: Install Percona repository
+      yum:
+        name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+        state: present
+
+    - name: Enable Percona Tools and Release repositories
+      command: percona-release enable-only tools release
+      when: ansible_os_family == "RedHat"
+
+    - name: Install qpress
+      yum:
+        name: qpress
+        state: present
+
+    - name: Install Percona XtraBackup
+      yum:
+        name: percona-xtrabackup-24
+        state: present
+
+    - name: Ensure MySQL is running
+      service:
+        name: mysql
+        state: started
+
+    - name: Create MySQL backup user
+      community.mysql.mysql_user:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        name: backup_user
+        host: localhost
+        password: "{{ backup_user_password }}"
+        priv: '*.*:RELOAD,LOCK TABLES,PROCESS,REPLICATION CLIENT'
+        state: present
+
+    - name: Flush MySQL privileges
+      community.mysql.mysql_db:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        state: import
+        name: mysql
+        target: /dev/null
+        command: FLUSH PRIVILEGES;
