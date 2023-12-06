@@ -205,31 +205,23 @@
   tags: mysql, mysql_conf
 
 - name: Set mysql root user password and only allow access to root user from HAProxy and localhost
-  community.mysql.mysql_user:
-    login_user: root
-    login_password: '{{ mysql_root_password }}'
-    name: root
-    host: "{{ item }}"
-    check_implicit_admin: yes
-    password: '{{ mysql_root_password }}'
-    priv: '*.*:ALL'
-    state: present
-    update_password: always
-  when: inventory_hostname == groups['mysql_cluster'][0]
+  shell: |
+    mysql -u root -p'{{ mysql_root_password }}' -e "
+    CREATE USER 'root'@'{{ item }}' IDENTIFIED BY '{{ mysql_root_password }}';
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'{{ item }}' WITH GRANT OPTION;
+    FLUSH PRIVILEGES;"
   loop:
     - "{{ groups['balancers'] }}"
     - 127.0.0.1
     - "localhost"
+  when: inventory_hostname == groups['mysql_cluster'][0]
   tags: mysql, mysql_conf, post-install
 
-- name: Create haproxy mysql user to perform basic health checks 
-  community.mysql.mysql_user:
-    login_user: root
-    login_password: '{{ mysql_root_password }}'
-    name: haproxy_user
-    host: "{{ item }}"
-    state: present
-    check_implicit_admin: yes
+- name: Create haproxy mysql user to perform basic health checks
+  shell: |
+    mysql -u root -p'{{ mysql_root_password }}' -e "
+    CREATE USER 'haproxy_user'@'{{ item }}';
+    FLUSH PRIVILEGES;"
   loop:
     - "{{ groups['balancers'] }}"
   tags: mysql, mysql_conf, post-install

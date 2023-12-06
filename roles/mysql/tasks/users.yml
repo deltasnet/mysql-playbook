@@ -1,12 +1,9 @@
 ---
 - name: Ensure MySQL users are present.
-  community.mysql.mysql_user:
-    name: "{{ item.name }}"
-    host: "{{ item.host | default('localhost') }}"
-    password: "{{ item.password }}"
-    priv: "{{ item.priv | default('*.*:USAGE') }}"
-    state: "{{ item.state | default('present') }}"
-    append_privs: "{{ item.append_privs | default('no') }}"
-    encrypted: "{{ item.encrypted | default('no') }}"
+  shell: |
+    mysql -u root -p'{{ mysql_root_password }}' -e "
+    CREATE USER IF NOT EXISTS '{{ item.name }}'@'{{ item.host | default('localhost') }}' IDENTIFIED BY '{{ item.password }}';
+    GRANT {{ item.priv | default('*.*:USAGE') }} ON *.* TO '{{ item.name }}'@'{{ item.host | default('localhost') }}';
+    FLUSH PRIVILEGES;"
   loop: "{{ mysql_users }}"
   no_log: true
