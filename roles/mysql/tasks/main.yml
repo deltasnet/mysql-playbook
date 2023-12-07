@@ -222,8 +222,7 @@
     mysql -u root -p'{{ mysql_root_password }}' -e "
     CREATE USER 'haproxy_user'@'{{ item }}';
     FLUSH PRIVILEGES;"
-  loop:
-    - "{{ groups['balancers'] }}"
+  loop: "{{ groups['balancers'] | flatten(1) }}"
   tags: mysql, mysql_conf, post-install
 
 - name: Include users tasks.
