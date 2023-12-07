@@ -217,6 +217,16 @@
   when: inventory_hostname == groups['mysql_cluster'][0]
   tags: mysql, mysql_conf, post-install
 
+- name: Set global password configuration to 0
+  shell: |
+    mysql -u root -p'{{ mysql_root_password }}' -e "
+    SET GLOBAL validate_password_policy=0;
+    SET GLOBAL validate_password_special_char_count=0;
+    SET GLOBAL validate_password_mixed_case_count=0;
+    SET GLOBAL validate_password_number_count=0;
+    SET GLOBAL validate_password_length=0;"
+  tags: mysql, mysql_conf, post-install
+
 - name: Create haproxy mysql user to perform basic health checks
   shell: |
     mysql -u root -p'{{ mysql_root_password }}' -e "
