@@ -19,8 +19,8 @@ bind-address    = 0.0.0.0
 server-id       = {{ server_id }}
 plugin_dir      = /usr/lib64/mysql/plugin
 
-innodb_buffer_pool_size         = 12G # 70-80% of total RAM
-innodb_buffer_pool_instances    = 4 # 1 per every 4GB
+innodb_buffer_pool_size         = {{ ((ansible_memtotal_mb * 0.75) / 1024) | int }}G
+innodb_buffer_pool_instances    = {{ [1, [((ansible_memtotal_mb * 0.75 / 1024) / 3), 16] | min] | max }}
 innodb_flush_log_at_trx_commit  = 2 # For SSD
 innodb_log_file_size            = 512M # Large log file for less IO
 innodb_file_per_table           = 1
