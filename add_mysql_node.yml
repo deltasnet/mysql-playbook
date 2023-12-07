@@ -168,7 +168,6 @@
     - role: timezone
     - role: ntp
     - role: copy
-    - role: cron
 
 - name: add_mysql_node.yml | Add new MySQL instance to the cluster
   hosts: new_replica
