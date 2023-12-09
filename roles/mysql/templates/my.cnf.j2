@@ -41,7 +41,7 @@ general_log_file                = {{ mysql_log_dir }}/mysql.log
 log_error                       = {{ mysql_log_dir }}/mysql-error.log
 slow_query_log                  = 1
 slow_query_log_file             = {{ mysql_log_dir }}/mysql-slow.log
-log_bin                         = mysql-bin.log
+log_bin                         = {{ mysql_log_bin_dir }}/log.bin
 log-bin-index                   = mysql-bin.index
 expire_logs_days                = {{ mysql_expire_logs_days }}
 max_binlog_size                 = {{ mysql_max_binlog_size }}
@@ -50,6 +50,5 @@ max_binlog_size                 = {{ mysql_max_binlog_size }}
 binlog_format                   = ROW
 gtid_mode                       = ON
 enforce_gtid_consistency        = ON
-
 # Include Galera-specific settings
-!include /etc/mysql/conf.d/galera.cnf
+!include {{ mysql_conf_dir }}/galera.cnf

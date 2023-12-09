@@ -7,3 +7,4 @@
     FLUSH PRIVILEGES;"
   loop: "{{ mysql_users }}"
   no_log: true
+  when: inventory_hostname == groups['mysql_cluster'][0]

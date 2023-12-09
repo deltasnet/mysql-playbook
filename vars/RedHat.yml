@@ -1,12 +1,14 @@
 ---
 mysql_base_dir: "/software/mysql"
 mysql_data_dir: "{{ mysql_base_dir }}/data"
+mysql_log_bin_dir: "{{ mysql_base_dir }}/log-bin"
 mysql_bin_dir: "/usr/bin"
-mysql_unix_socket_dir: "/var/run/mysqld/"
+mysql_unix_socket_dir: "/var/run/mysqld"
 mysql_log_dir: "/var/log/mysql"
 mysql_pid_dir: "/var/run/mysqld"
-mysql_conf_dir: "/etc/mysql/conf.d"
-mysql_conf: "/etc/my.cnf"
+mysql_conf_dir: "/etc/my.cnf.d"
+mysql_conf: "{{ mysql_conf_dir }}/my.cnf"
+mysql_extra_lsn_dir: "{{ mysql_base_dir }}/xtrabackup_lsn"
 galera_conf: "{{ mysql_conf_dir }}/galera.cnf"
 
 # Repository

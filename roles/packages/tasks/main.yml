@@ -1,27 +1,5 @@
 ---
 
-# Install packages from files
-- block:
-    - name: Copy packages into /tmp
-      ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: /tmp/
-      loop: "{{ packages_from_file }}"
-      register: copy_packages_result
-
-    - name: Install packages
-      ansible.builtin.package:
-        name: "/tmp/{{ item }}"
-        state: present
-      loop: "{{ packages_from_file | map('basename') | list }}"
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat" and copy_packages_result.changed
-  when: packages_from_file is defined and packages_from_file | length > 0
-  tags: install_packages_from_file
-
 - block:  # RedHat (update cache)
     - name: Clean yum cache
       ansible.builtin.command: yum clean all
@@ -48,35 +26,4 @@
   environment: "{{ proxy_env | default({}) }}"
   when: ansible_os_family == "RedHat" and installation_method == "repo"
   tags: install_packages
-
-# MySQL prepare for install (for RHEL 8)
-- block:
-    - name: MySQL | check if appstream module is enabled
-      ansible.builtin.command: 'dnf -y -C module list mysql'
-      register: mysql_module_result
-      changed_when: false
-
-    - name: MySQL | disable appstream module
-      ansible.builtin.command: 'dnf -y -C module disable mysql'
-      when: "'[x] ' not in mysql_module_result.stdout"
-  when: installation_method == "repo" and
-        ansible_os_family == "RedHat" and
-        ansible_distribution_major_version >= '8'
-  ignore_errors: true
-  tags: install_mysql
-
-# Install MySQL from repository
-# RedHat
-- name: Install MySQL packages
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ mysql_packages }}"
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when: ansible_os_family == "RedHat" and installation_method == "repo"
-  tags: install_packages, install_mysql
 ...

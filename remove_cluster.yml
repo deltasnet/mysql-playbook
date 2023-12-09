@@ -28,6 +28,7 @@
           - "{{ mysql_unix_socket_dir }}"
           - "{{ mysql_log_dir }}"
           - "{{ mysql_conf_dir }}"
+          - "{{ mysql_base_dir }}"
       when: remove_mysql
       ignore_errors: true
 

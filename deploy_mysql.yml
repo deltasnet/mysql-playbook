@@ -121,11 +121,14 @@
     - role: ntp
     - role: ssh-keys
     - role: copy
+    - role: xtrabackup
+      when: xtrabackup_install|bool
 
 - name: deploy_mysql_cluster.yml | Deploy balancers
   ansible.builtin.import_playbook: balancers.yml
   when: with_haproxy_load_balancing|bool
   tags: load_balancing, haproxy
+
 
 - name: deploy_mysql_cluster.yml | mysql Cluster Deployment
   hosts: mysql_cluster

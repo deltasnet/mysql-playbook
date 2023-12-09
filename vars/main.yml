@@ -68,3 +68,5 @@ mysql_schemas: []
 
 galera_repo_url: https://releases.galeracluster.com/galera-3/redhat/8/x86_64/
 mysql_wsrep_repo_url: https://releases.galeracluster.com/mysql-wsrep-5.7/redhat/8/x86_64/
+
+xtrabackup_install: true

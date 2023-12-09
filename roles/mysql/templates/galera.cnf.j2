@@ -25,7 +25,7 @@ wsrep_max_ws_rows=131072
 wsrep_max_ws_size=1073741824
 
 # SST/IST Settings - these should be secure
-wsrep_sst_auth=sstuser:sstpassword
+wsrep_sst_auth="{{ mysql_root_username }}":"{{ mysql_root_password }}"
 
 {% if groups['dr_datacenter'] is defined and groups['dr_datacenter'] %}
 {% if ansible_host in groups['dr_datacenter'] %}
