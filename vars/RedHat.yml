@@ -10,6 +10,7 @@ mysql_conf_dir: "/etc/my.cnf.d"
 mysql_conf: "/etc/my.cnf"
 mysql_extra_lsn_dir: "{{ mysql_base_dir }}/xtrabackup_lsn"
 galera_conf: "{{ mysql_conf_dir }}/galera.cnf"
+xtrabackup_conf: "{{ mysql_conf_dir }}/xtrabackup.cnf"
 
 # Repository
 yum_repository: []
