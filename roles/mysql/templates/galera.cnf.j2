@@ -13,14 +13,9 @@ wsrep_node_name="{{ ansible_hostname }}"
 # Galera Synchronization Configuration
 wsrep_sst_method=rsync
 
-# InnoDB Settings
-innodb_autoinc_lock_mode=2
-innodb_flush_log_at_trx_commit=0
-
 # This is recommended for Galera
 wsrep_slave_threads=4
 wsrep_log_conflicts=ON
-wsrep_certify_nonPK=ON
 wsrep_max_ws_rows=131072
 wsrep_max_ws_size=1073741824
 
