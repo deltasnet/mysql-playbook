@@ -1,0 +1,74 @@
+---
+- hosts: mysql_cluster
+  become: true
+  become_method: sudo
+  gather_facts: true
+  any_errors_fatal: true
+  vars_files:
+  - vars/main.yml
+  - vars/system.yml
+  
+  pre_tasks:
+  - name: Include OS-specific variables
+    ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+    tags: always
+    
+  - name: Make sure the /software directory exists
+    ansible.builtin.file:
+      dest: "/software"
+      state: directory
+      owner: mysql
+      group: mysql
+    tags: always
+    
+  tasks:
+  - name: Make sure the /software directory exists
+    ansible.builtin.file:
+      dest: "/software"
+      state: directory
+      owner: mysql
+      group: mysql
+    tags: always
+    
+  - name: Import Percona GPG key
+    rpm_key:
+      key: https://www.percona.com/downloads/RPM-GPG-KEY-percona
+      state: present
+    when: ansible_os_family == "RedHat"
+
+  - name: Install
+    yum:
+      name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+      state: present
+    
+  - name: Enable Percona Tools and Release repositories
+    command: percona-release enable-only tools release
+    when: ansible_os_family == "RedHat"
+    
+  - name: Clean dnf cache
+    ansible.builtin.command: dnf clean all
+    when: ansible_distribution_major_version is version('8', '>=')
+    
+  - name: Install qpress
+    yum:
+      name: qpress
+      state: present
+  
+  - name: Install Percona XtraBackup
+    yum:
+      name: percona-xtrabackup-24
+      state: present
+    
+  - name: Append XtraBackup configuration
+    blockinfile:
+      path: "{{ mysql_conf }}"
+      block: |
+        [xtrabackup]
+        user = "{{ mysql_root_username }}"
+        password = "{{ mysql_root_password }}"
+        compress = lz4
+        compress_threads = 4
+        datadir = "{{ mysql_data_dir }}"
+        parallel = 4
+        extra-lsndir = "{{ mysql_extra_lsn_dir }}"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK XTRABACKUP"
