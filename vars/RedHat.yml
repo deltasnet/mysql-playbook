@@ -7,7 +7,7 @@ mysql_unix_socket_dir: "/var/run/mysqld"
 mysql_log_dir: "/var/log/mysql"
 mysql_pid_dir: "/var/run/mysqld"
 mysql_conf_dir: "/etc/my.cnf.d"
-mysql_conf: "{{ mysql_conf_dir }}/my.cnf"
+mysql_conf: "/etc/my.cnf"
 mysql_extra_lsn_dir: "{{ mysql_base_dir }}/xtrabackup_lsn"
 galera_conf: "{{ mysql_conf_dir }}/galera.cnf"
 

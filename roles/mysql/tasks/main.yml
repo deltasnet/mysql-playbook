@@ -46,16 +46,16 @@
     mode: "0750"
   tags: mysql, mysql_conf
 
-- name: Update conf file "/etc/my.cnf"
+- name: Update conf file "{{ mysql_conf }}"
   ansible.builtin.template:
     src: my.cnf.j2
-    dest: /etc/my.cnf
+    dest: "{{ mysql_conf }}"
     owner: "{{ mysql_os_user }}"
     group: "{{ mysql_os_group }}"
     mode: "0640"
   tags: mysql, mysql_conf
 
-- name: Update conf file "/etc/my.cnf.d/galera.cnf"
+- name: Update conf file "{{ galera_conf }}"
   ansible.builtin.template:
     src: galera.cnf.j2
     dest: "{{ galera_conf }}"
