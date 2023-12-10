@@ -1,12 +1,4 @@
 ---
-- name: Make sure the /software directory exists
-  ansible.builtin.file:
-    dest: "/software"
-    state: directory
-    owner: mysql
-    group: mysql
-  tags: always
-
 - name: Import Percona GPG key
   rpm_key:
     key: https://www.percona.com/downloads/RPM-GPG-KEY-percona

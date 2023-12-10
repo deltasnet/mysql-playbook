@@ -29,6 +29,14 @@
   when: ansible_os_family == "RedHat" and installation_method == "repo"
   tags: install_packages, install_mysql
 
+- name: Make sure the /software directory exists
+  ansible.builtin.file:
+    dest: "/software"
+    state: directory
+    owner: mysql
+    group: mysql
+  tags: always
+
 - name: Make sure that conf directory exists
   ansible.builtin.file:
     path: "{{ mysql_conf_dir }}"

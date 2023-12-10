@@ -143,14 +143,6 @@
       ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
       tags: always
 
-    - name: Make sure the /software directory exists
-      ansible.builtin.file:
-        dest: "/software"
-        state: directory
-        owner: mysql
-        group: mysql
-      tags: always
-
   roles:
     - role: mysql
     - role: xtrabackup
