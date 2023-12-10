@@ -284,7 +284,8 @@
     FLUSH PRIVILEGES;"
   loop:
     - 127.0.0.1
-    - "localhost"
+    - localhost
+  ignore_errors: true
   when: inventory_hostname == groups['mysql_cluster'][0]
   tags: mysql, mysql_conf, post-install
 
@@ -296,6 +297,7 @@
     SET GLOBAL validate_password_mixed_case_count=0;
     SET GLOBAL validate_password_number_count=0;
     SET GLOBAL validate_password_length=0;"
+  ignore_errors: true
   tags: mysql, mysql_conf, post-install
   when: inventory_hostname == groups['mysql_cluster'][0]
 
@@ -305,6 +307,7 @@
     CREATE USER 'haproxy_user'@'{{ item }}';
     FLUSH PRIVILEGES;"
   loop: "{{ groups['balancers'] | flatten(1) }}"
+  ignore_errors: true
   tags: mysql, mysql_conf, post-install
   when: inventory_hostname == groups['mysql_cluster'][0]
 

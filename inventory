@@ -1,13 +1,13 @@
 [balancers]
-10.0.1.124
-10.0.1.152
+10.0.1.173
+10.0.1.222
 
 [master]
-10.0.1.62 hostname=mysql-node01 mysql_exists=false server_id=1
+10.0.1.105 hostname=mysql-node01 mysql_exists=false server_id=1
 
 [replica]
-10.0.1.203 hostname=mysql-node02 mysql_exists=false server_id=2
-10.0.1.104 hostname=mysql-node03 mysql_exists=false server_id=3
+10.0.1.52 hostname=mysql-node02 mysql_exists=false server_id=2
+10.0.1.18 hostname=mysql-node03 mysql_exists=false server_id=3
 
 [mysql_cluster:children]
 master

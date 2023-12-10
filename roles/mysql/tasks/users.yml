@@ -6,5 +6,6 @@
     GRANT {{ item.priv | default('*.*:USAGE') }} ON *.* TO '{{ item.name }}'@'{{ item.host | default('localhost') }}';
     FLUSH PRIVILEGES;"
   loop: "{{ mysql_users }}"
+  ignore_errors: true
   no_log: true
   when: inventory_hostname == groups['mysql_cluster'][0]
