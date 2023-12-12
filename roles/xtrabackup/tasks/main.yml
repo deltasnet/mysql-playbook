@@ -32,9 +32,6 @@
   ansible.builtin.file:
     path: "{{ mysql_conf_dir }}"
     state: directory
-    owner: mysql
-    group: mysql
-    mode: '0755'
   tags: always
 
 - name: Append XtraBackup configuration

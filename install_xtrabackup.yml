@@ -50,7 +50,13 @@
     yum:
       name: percona-xtrabackup-24
       state: present
-    
+
+  - name: Create "{{ mysql_conf_dir }}" directory
+    ansible.builtin.file:
+      path: "{{ mysql_conf_dir }}"
+      state: directory
+    tags: always
+
   - name: Append XtraBackup configuration
     ansible.builtin.template:
       src: xtrabackup.cnf.j2
