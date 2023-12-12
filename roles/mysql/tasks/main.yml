@@ -64,6 +64,17 @@
     mode: "0640"
   tags: mysql, mysql_conf
 
+- name:  XtraBackup configuration
+  ansible.builtin.template:
+    src: xtrabackup.cnf.j2
+    dest: "{{ xtrabackup_conf }}"
+    owner: mysql
+    group: mysql
+    mode: '0644'
+  when: xtrabackup_install | bool
+  tags: mysql, mysql_conf
+  
+  
 - name: Make sure that mysql log directory exists
   ansible.builtin.file:
     path: "{{ mysql_log_dir }}"
