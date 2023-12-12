@@ -52,15 +52,10 @@
       state: present
     
   - name: Append XtraBackup configuration
-    blockinfile:
-      path: "{{ mysql_conf }}"
-      block: |
-        [xtrabackup]
-        user = "{{ mysql_root_username }}"
-        password = "{{ mysql_root_password }}"
-        compress = lz4
-        compress_threads = 4
-        datadir = "{{ mysql_data_dir }}"
-        parallel = 4
-        extra-lsndir = "{{ mysql_extra_lsn_dir }}"
-        marker: "# {mark} ANSIBLE MANAGED BLOCK XTRABACKUP"
+    ansible.builtin.template:
+      src: xtrabackup.cnf.j2
+      dest: "{{ xtrabackup_conf }}"
+      owner: mysql
+      group: mysql
+      mode: '0644'
+    tags: always

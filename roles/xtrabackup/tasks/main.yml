@@ -40,10 +40,9 @@
 - name: Append XtraBackup configuration
   ansible.builtin.template:
     src: xtrabackup.cnf.j2
-    dest: "{{ mysql_conf_dir }}/xtrabackup.cnf"
+    dest: "{{ xtrabackup_conf }}"
     owner: mysql
     group: mysql
     mode: '0644'
-    path: "{{ xtrabackup_conf }}"
   tags: always
   
