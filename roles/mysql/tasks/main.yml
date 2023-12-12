@@ -66,7 +66,7 @@
 
 - name:  XtraBackup configuration
   ansible.builtin.template:
-    src: xtrabackup.cnf.j2
+    src: ../xtrabackup/templates/xtrabackup.cnf.j2
     dest: "{{ xtrabackup_conf }}"
     owner: mysql
     group: mysql
