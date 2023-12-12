@@ -144,6 +144,6 @@
       tags: always
 
   roles:
-    - role: mysql
     - role: xtrabackup
       when: xtrabackup_install|bool
+    - role: mysql

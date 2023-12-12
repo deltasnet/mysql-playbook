@@ -11,7 +11,7 @@ wsrep_node_address="{{ ansible_default_ipv4.address }}"
 wsrep_node_name="{{ ansible_hostname }}"
 
 # Galera Synchronization Configuration
-wsrep_sst_method=rsync
+wsrep_sst_method=xtrabackup-v2
 
 # This is recommended for Galera
 wsrep_slave_threads=4

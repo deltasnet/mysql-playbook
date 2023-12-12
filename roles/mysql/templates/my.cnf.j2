@@ -18,11 +18,11 @@ lc-messages-dir = /usr/share/mysql
 bind-address    = 0.0.0.0
 server-id       = {{ server_id }}
 plugin_dir      = /usr/lib64/mysql/plugin
-
+large-pages     = ON
 
 default-storage-engine          = innodb
-innodb_buffer_pool_size         = {{ ((ansible_memtotal_mb * 0.75) / 1024) | int }}G
-innodb_buffer_pool_instances    = {{ [1, [((ansible_memtotal_mb * 0.75 / 1024) / 3), 16] | min] | max }}
+innodb_buffer_pool_size         = {{ [1, [(ansible_memtotal_mb * 0.75 / 1024) | int, 16] | min]|max }}G
+innodb_buffer_pool_instances    = {{ [1, [(ansible_memtotal_mb * 0.75 / 1024)| int, 12] | min]|max }}
 innodb_flush_log_at_trx_commit  = 2 # For SSD
 innodb_log_file_size            = 512M # Large log file for less IO
 innodb_file_per_table           = 1
