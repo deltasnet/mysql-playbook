@@ -57,10 +57,7 @@ sysctl_conf:
     - { name: "vm.dirty_ratio", value: "25" }
     - { name: "vm.dirty_background_ratio", value: "5" }
     - { name: "vm.dirty_expire_centisecs", value: "500" }
-    - { name: "vm.dirty_bytes", value: "0" }
-    - { name: "vm.dirty_background_bytes", value: "0" }
     - { name: "vm.overcommit_memory", value: "1" }
-    - { name: "vm.min_free_kbytes", value: "81920" }
   balancers:
     - { name: "net.ipv4.ip_nonlocal_bind", value: "1" }
     - { name: "net.ipv4.ip_forward", value: "1" }
