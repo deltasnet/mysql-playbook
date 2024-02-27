@@ -1,4 +1,10 @@
 ---
+- name: MySQL | Import Galera Cluster GPG key
+  rpm_key:
+    key: https://releases.galeracluster.com/GPG-KEY-galeracluster.com
+    state: present
+  when: ansible_os_family == "RedHat"
+
 - name: MySQL | check if appstream module is enabled
   ansible.builtin.command: "dnf -y -C module list mysql"
   register: mysql_module_result
