@@ -1,13 +1,21 @@
 ---
 - name: MySQL | check if appstream module is enabled
-  ansible.builtin.command: 'dnf -y -C module list mysql'
+  ansible.builtin.command: "dnf -y -C module list mysql"
   register: mysql_module_result
   changed_when: false
   when: ansible_os_family == "RedHat" and installation_method == "repo"
   tags: install_packages, install_mysql
 
 - name: MySQL | disable appstream module
-  ansible.builtin.command: 'dnf -y -C module disable mysql'
+  ansible.builtin.command: "dnf -y -C module disable mysql"
+  when: ansible_os_family == "RedHat" and installation_method == "repo"
+  tags: install_packages, install_mysql
+
+- name: MYSQL | remove conflicting packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ mysql_conflicting_packages }}"
   when: ansible_os_family == "RedHat" and installation_method == "repo"
   tags: install_packages, install_mysql
 
@@ -24,7 +32,7 @@
   when: ansible_os_family == "RedHat" and installation_method == "repo"
   tags: install_packages, install_mysql
 
-- name: Disable mysql systemd unit to prevent cluster from starting in wrong order 
+- name: Disable mysql systemd unit to prevent cluster from starting in wrong order
   systemd: name=mysqld enabled=no
   when: ansible_os_family == "RedHat" and installation_method == "repo"
   tags: install_packages, install_mysql
@@ -64,17 +72,16 @@
     mode: "0640"
   tags: mysql, mysql_conf
 
-- name:  XtraBackup configuration
+- name: XtraBackup configuration
   ansible.builtin.template:
     src: ../xtrabackup/templates/xtrabackup.cnf.j2
     dest: "{{ xtrabackup_conf }}"
     owner: mysql
     group: mysql
-    mode: '0644'
+    mode: "0644"
   when: xtrabackup_install | bool
   tags: mysql, mysql_conf
-  
-  
+
 - name: Make sure that mysql log directory exists
   ansible.builtin.file:
     path: "{{ mysql_log_dir }}"
@@ -174,18 +181,18 @@
     - mysql_connect_any
   tags: mysql, mysql_conf
 
-- name: Allow MySQL and Galera ports on SELinux 
+- name: Allow MySQL and Galera ports on SELinux
   community.general.seport:
     ports: "{{ item.port }}"
     proto: "{{ item.proto }}"
     setype: mysqld_port_t
-    state: present 
+    state: present
   loop:
-    - { port: "{{ mysql_port }}", proto: 'tcp' } 
-    - { port: "{{ galera_state_transfer_port }}", proto: 'tcp' } 
-    - { port: "{{ galera_port }}", proto: 'tcp' } 
-    - { port: "{{ galera_port }}", proto: 'udp' } 
-    - { port: "{{ galera_incremental_state_transfer_port }}", proto: 'tcp' } 
+    - { port: "{{ mysql_port }}", proto: "tcp" }
+    - { port: "{{ galera_state_transfer_port }}", proto: "tcp" }
+    - { port: "{{ galera_port }}", proto: "tcp" }
+    - { port: "{{ galera_port }}", proto: "udp" }
+    - { port: "{{ galera_incremental_state_transfer_port }}", proto: "tcp" }
   tags: mysql, mysql_conf
 
 - name: Allow MySQL to modify /software/mysql/data
@@ -286,7 +293,6 @@
   any_errors_fatal: true
   tags: mysql, mysql_conf
 
-
 - name: Set mysql root user password and only allow access to root user from HAProxy and localhost
   shell: |
     mysql -u root -p'{{ mysql_root_password }}' -e "
@@ -325,4 +331,3 @@
 - name: Include users tasks.
   include_tasks: users.yml
   tags: mysql, mysql_conf, post-install
-...

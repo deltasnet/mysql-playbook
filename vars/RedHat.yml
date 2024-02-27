@@ -11,13 +11,15 @@ mysql_conf: "/etc/my.cnf"
 mysql_extra_lsn_dir: "{{ mysql_base_dir }}/xtrabackup_lsn"
 galera_conf: "{{ mysql_conf_dir }}/galera.cnf"
 xtrabackup_conf: "{{ mysql_conf_dir }}/xtrabackup.cnf"
+mysql_conflicting_packages:
+  - mariadb-connector-c-config
 
 # Repository
 yum_repository: []
 
-install_epel_repo: true  # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
-install_mysql_repo: true  # or 'false' (installed from the package "mysql-redhat-repo-latest.noarch.rpm")
-install_scl_repo: true  # or 'false' (Redhat 7 family only)
+install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
+install_mysql_repo: true # or 'false' (installed from the package "mysql-redhat-repo-latest.noarch.rpm")
+install_scl_repo: true # or 'false' (Redhat 7 family only)
 
 # Packages (for yum repo)
 os_specific_packages:
@@ -59,16 +61,16 @@ mysql_packages:
   - rsync
 
 # (if with_haproxy_load_balancing: true)
-haproxy_installation_method: "rpm"  # (default)"rpm" or "src"
-haproxy_install_repo: true  # or 'false' # only for RedHat/CentOS version 7.
+haproxy_installation_method: "rpm" # (default)"rpm" or "src"
+haproxy_install_repo: true # or 'false' # only for RedHat/CentOS version 7.
 # For RedHat/CentOS/OracleLinux 7 the haproxy version 1.8 (LTS)
 # will be installed from the "rh-haproxy18" package from the Software Collections (SCL) repository.
 # You can preload the haproxy rpm packages to your YUM repository (in this case specify "haproxy_install_repo: false").
 
 # (optional) if haproxy_installation_method: 'src'
 haproxy_major: "1.8"
-haproxy_version: "1.8.25"  # version to build from source
-lua_src_repo: "https://www.lua.org/ftp/lua-5.3.5.tar.gz"  # required for build haproxy
+haproxy_version: "1.8.25" # version to build from source
+lua_src_repo: "https://www.lua.org/ftp/lua-5.3.5.tar.gz" # required for build haproxy
 haproxy_src_repo: "https://www.haproxy.org/download/{{ haproxy_major }}/src/haproxy-{{ haproxy_version }}.tar.gz"
 haproxy_compile_requirements:
   - unzip
@@ -84,17 +86,14 @@ haproxy_compile_requirements:
   - openssl-libs
   - systemd-devel
 
-
 # You can also use your own repository for extra packages. You need to preload all the packages and change this URLs.
-installation_method: "repo"  # (default)"repo" or "file"
-
+installation_method: "repo" # (default)"repo" or "file"
 
 # if with_haproxy_load_balancing: true
 haproxy_package_file: []
 
 # (optional) if haproxy_installation_method: 'src'
-lua_src_file: "lua-5.3.5.tar.gz"  # https://www.lua.org/ftp/lua-5.3.5.tar.gz (required for build haproxy)
-haproxy_src_file: "haproxy-1.8.21.tar.gz"  # http://www.haproxy.org/download/1.8/src/
+lua_src_file: "lua-5.3.5.tar.gz" # https://www.lua.org/ftp/lua-5.3.5.tar.gz (required for build haproxy)
+haproxy_src_file: "haproxy-1.8.21.tar.gz" # http://www.haproxy.org/download/1.8/src/
 
 packages_from_file: []
-...
