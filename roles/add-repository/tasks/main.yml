@@ -1,6 +1,5 @@
 ---
-
-- block:  # RedHat/CentOS
+- block: # RedHat/CentOS
     - name: Add repository
       ansible.builtin.yum_repository:
         name: "{{ item.name }}"
@@ -46,23 +45,22 @@
 
     # Install MySQL Repository
     - block:
-      - name: Add Galera repository
-        copy:
-          dest: "/etc/yum.repos.d/galera.repo"
-          content: |
-            [galera]
-            name = Galera
-            baseurl = https://releases.galeracluster.com/galera-3/redhat/8/x86_64/
-            gpgkey = https://releases.galeracluster.com/GPG-KEY-galeracluster.com
-            gpgcheck = 1
+        - name: Add Galera repository
+          copy:
+            dest: "/etc/yum.repos.d/galera.repo"
+            content: |
+              [galera]
+              name = Galera
+              baseurl = https://releases.galeracluster.com/galera-3/redhat/8/x86_64/
+              gpgkey = https://releases.galeracluster.com/GPG-KEY-galeracluster.com
+              gpgcheck = 0
 
-            [mysql-wsrep]
-            name = MySQL-wsrep
-            baseurl = https://releases.galeracluster.com/mysql-wsrep-5.7/redhat/8/x86_64/
-            gpgkey = https://releases.galeracluster.com/GPG-KEY-galeracluster.com
-            gpgcheck = 1
+              [mysql-wsrep]
+              name = MySQL-wsrep
+              baseurl = https://releases.galeracluster.com/mysql-wsrep-5.7/redhat/8/x86_64/
+              gpgkey = https://releases.galeracluster.com/GPG-KEY-galeracluster.com
+              gpgcheck = 0
       when: install_mysql_repo|bool and ansible_distribution_major_version == '8'
   environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "repo" and ansible_os_family == "RedHat"
   tags: add_repo
-...
